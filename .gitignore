@@ -1,0 +1,17 @@
+node_modules/
+dist/
+CLAUDE.md
+.claude/
+ 
+# Variables de entorno — NUNCA subir al repo
+.env
+ 
+# LangGraph dev — estado persistido localmente
+.langgraph/
+ 
+# Sistema
+.DS_Store
+*.log
+ 
+# LangGraph API
+.langgraph_api

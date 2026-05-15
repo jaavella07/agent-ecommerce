@@ -1,0 +1,7 @@
+{
+  "node_version": "20",
+  "graphs": {
+    "super_agent": "./src/super_agent/super_agent.ts:superAgentGraph"
+  },
+  "env": ".env"
+}
