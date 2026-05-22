@@ -1,6 +1,6 @@
 import { tool } from "@langchain/core/tools";
 import { z }    from "zod";
-import { BASE_URL } from "../../shared/apiClient.js";
+import { apiFetch } from "../../shared/apiClient.js";
 
 // ─── FAQ hardcodeado (políticas de la tienda — no vienen de la API) ──────────
 
@@ -27,8 +27,8 @@ export const searchFaqTool = tool(
     }
 
     for (const [key, answer] of Object.entries(FAQ_DATABASE)) {
-      const keywords = key.split(" ");
-      if (keywords.some((kw) => lowerQuery.includes(kw))) return answer;
+      const keywords = key.split(" ").filter((kw) => kw.length >= 4);
+      if (keywords.length > 0 && keywords.some((kw) => lowerQuery.includes(kw))) return answer;
     }
 
     return "No encontré información específica sobre eso. Te recomiendo contactar soporte en soporte@techsstore.com o llamar al 1-800-TECH.";
@@ -47,9 +47,9 @@ export const searchProductInfoTool = tool(
   async ({ product_name }: { product_name: string }) => {
     try {
       const params = new URLSearchParams({ search: product_name, limit: "1" });
-      const res    = await fetch(`${BASE_URL}/products?${params.toString()}`);
+      const res    = await apiFetch(`/products?${params.toString()}`);
       if (!res.ok) return JSON.stringify({ found: false, error: `HTTP ${res.status}` });
-      const body    = await res.json();
+      const body    = await res.json() as any;
       const product = body.data?.data?.[0];
       if (!product) {
         return JSON.stringify({

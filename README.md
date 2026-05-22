@@ -58,7 +58,7 @@ LANGCHAIN_TRACING_V2=true
 LANGCHAIN_PROJECT=agent-ecommerce
 
 # PostgreSQL — persistencia de interacciones
-DATABASE_URL=postgresql://agent_user:agent_pass@localhost:5432/ecommerce_agent
+DATABASE_URL=
 
 # TechsStore API
 API_BASE_URL=http://localhost:3000/api/v1

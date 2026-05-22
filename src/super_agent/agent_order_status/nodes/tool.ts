@@ -8,7 +8,7 @@ export const getOrderStatusTool = tool(
       const normalizedId = order_id.trim().toUpperCase();
       const res  = await apiFetch(`/orders?orderNumber=${encodeURIComponent(normalizedId)}&limit=1`);
       if (!res.ok) return JSON.stringify({ found: false, error: `HTTP ${res.status}` });
-      const body  = await res.json();
+      const body  = await res.json() as any;
       const order = body.data?.data?.[0];
       if (!order) {
         return JSON.stringify({
@@ -37,7 +37,7 @@ export const getOrdersByEmailTool = tool(
       const lowerEmail = email.toLowerCase().trim();
       const res    = await apiFetch(`/orders?email=${encodeURIComponent(lowerEmail)}&limit=5`);
       if (!res.ok) return JSON.stringify({ found: false, error: `HTTP ${res.status}` });
-      const body   = await res.json();
+      const body   = await res.json() as any;
       const orders = body.data?.data ?? [];
       if (orders.length === 0) {
         return JSON.stringify({

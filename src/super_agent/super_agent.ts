@@ -1,5 +1,4 @@
 import { END, START, StateGraph } from "@langchain/langgraph";
-import { HumanMessage } from "@langchain/core/messages";
 
 import { intentRouterNode, intentRouterEdge } from "./intent_router/index.js";
 import { agentOrderStatusGraph } from "./agent_order_status/index.js";
@@ -97,7 +96,6 @@ export const superAgentGraph = new StateGraph(EcommerceStateAnnotation)
 export async function runSuperAgent(userMessage: string) {
   const result = await superAgentGraph.invoke({
     user_input: userMessage,
-    messages: [new HumanMessage(userMessage)],
   });
 
   return {

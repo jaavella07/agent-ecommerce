@@ -8,7 +8,7 @@ export const getTrackingInfoTool = tool(
       const normalized = tracking_number.trim().toUpperCase();
       const res  = await apiFetch(`/orders?trackingNumber=${encodeURIComponent(normalized)}&limit=1`);
       if (!res.ok) return JSON.stringify({ found: false, error: `HTTP ${res.status}` });
-      const body  = await res.json();
+      const body  = await res.json() as any;
       const order = body.data?.data?.[0];
       if (!order) {
         return JSON.stringify({
@@ -46,7 +46,7 @@ export const getTrackingByOrderTool = tool(
       const normalized = order_id.trim().toUpperCase();
       const res  = await apiFetch(`/orders?orderNumber=${encodeURIComponent(normalized)}&limit=1`);
       if (!res.ok) return JSON.stringify({ found: false, error: `HTTP ${res.status}` });
-      const body  = await res.json();
+      const body  = await res.json() as any;
       const order = body.data?.data?.[0];
       if (!order) {
         return JSON.stringify({

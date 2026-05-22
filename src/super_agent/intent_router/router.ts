@@ -54,6 +54,7 @@ export async function intentRouterNode(
     intent: result.intent,
     next_step: result.intent,
     steps: 1,
+    messages: [new HumanMessage(userInput)],
   };
 }
 

@@ -5,7 +5,7 @@ import { BASE_URL } from "../../shared/apiClient.js";
 async function resolveCategoryId(categoryName: string): Promise<string | undefined> {
   const res = await fetch(`${BASE_URL}/products/categories`);
   if (!res.ok) return undefined;
-  const body = await res.json();
+  const body = await res.json() as any;
   const cats: any[] = body.data ?? [];
   return cats.find(
     (c) =>
@@ -43,7 +43,7 @@ export const searchProductsByCategoryTool = tool(
           message: `Error al consultar productos (HTTP ${res.status}). Intenta de nuevo.`,
         });
       }
-      const body = await res.json();
+      const body = await res.json() as any;
       return JSON.stringify({ products: body.data?.data ?? [] });
     } catch (e: any) {
       return JSON.stringify({ products: [], error: e.message });
@@ -69,7 +69,7 @@ export const getProductComparisonTool = tool(
         product_ids.map(async (id) => {
           const res = await fetch(`${BASE_URL}/products/${id}`);
           if (!res.ok) return null;
-          const body = await res.json();
+          const body = await res.json() as any;
           return body.data ?? null;
         }),
       );

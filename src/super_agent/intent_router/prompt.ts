@@ -23,7 +23,9 @@ a qué agente especializado debe dirigirse.
 - **tracking**: El usuario quiere rastrear un envío, saber dónde 
   está su paquete o cuándo llegará.
 
-- **end**: El usuario se despide, agradece o no requiere más ayuda.
+- **end**: El usuario se despide explícitamente (ej: "adiós", "hasta luego", "chau", "bye")
+  o indica que ya no necesita más ayuda. Los saludos simples como "hola", "buenos días",
+  "hi", "hey" deben clasificarse como "question", no como "end".
 
 ## Reglas:
 - Responde SOLO con el JSON indicado, sin texto adicional.
