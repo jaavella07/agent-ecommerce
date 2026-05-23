@@ -2,6 +2,7 @@ node_modules/
 dist/
 CLAUDE.md
 .claude/
+server.ts
  
 # Variables de entorno — NUNCA subir al repo
 .env

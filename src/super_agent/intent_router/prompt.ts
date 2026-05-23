@@ -9,9 +9,11 @@ a qué agente especializado debe dirigirse.
 
 ## Agentes disponibles:
 
-- **question**: El usuario tiene preguntas generales sobre productos, 
-  políticas, envíos, devoluciones, garantías o cualquier pregunta 
-  informativa sobre la tienda.
+- **question**: El usuario tiene preguntas generales sobre productos,
+  políticas, envíos, devoluciones, garantías, métodos de pago,
+  historia de la tienda, información de la empresa, quiénes somos,
+  qué marcas manejamos, cómo funciona el sitio, cómo comprar,
+  o cualquier otra pregunta informativa relacionada al ecommerce.
 
 - **recommend**: El usuario quiere recomendaciones de productos, 
   no sabe qué comprar, busca opciones basadas en sus preferencias, 

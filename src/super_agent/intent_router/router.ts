@@ -65,15 +65,16 @@ export type IntentRouterOutput =
   | "agent_recommend"
   | "agent_order_status"
   | "agent_tracking"
+  | "agent_farewell"
   | "__end__";
 
 export function intentRouterEdge(state: EcommerceState): IntentRouterOutput {
   const routeMap: Record<string, IntentRouterOutput> = {
-    question: "agent_question",
-    recommend: "agent_recommend",
+    question:     "agent_question",
+    recommend:    "agent_recommend",
     order_status: "agent_order_status",
-    tracking: "agent_tracking",
-    end: "__end__",
+    tracking:     "agent_tracking",
+    end:          "agent_farewell",
   };
 
   return routeMap[state.next_step ?? "end"] ?? "__end__";
