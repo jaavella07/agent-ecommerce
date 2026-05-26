@@ -13,7 +13,7 @@ export const getOrderStatusTool = tool(
       if (!order) {
         return JSON.stringify({
           found: false,
-          message: `No encontré la orden "${order_id}". Verifica el número e intenta de nuevo, o proporciona tu email para buscar tus pedidos.`,
+          message: `No encontré la orden "${order_id}". Verifica el número e intenta de nuevo`,
         });
       }
       return JSON.stringify({ found: true, order });
