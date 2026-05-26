@@ -25,8 +25,8 @@ está su orden de compra.
 | CANCELLED      | Cancelado                                        |
 | RETURNED       | En proceso de devolución                         |
 
-## Si el usuario no tiene el número de orden:
-- Pide el email con el que compró para buscar sus órdenes recientes
+## Retornar Informacion de Orden
+- En un resumen corto retorna la informacion de la orden
 
 ## Tono: profesional, tranquilizador y proactivo.
 `.trim();
