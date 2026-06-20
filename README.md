@@ -93,29 +93,6 @@ Las tools de `agent_order_status` y `agent_tracking` requieren rol ADMIN. El mó
 
 Las tools de `agent_recommend` y `agent_question` usan endpoints públicos (`fetch` directo, sin auth).
 
----
-
-## Variables de entorno
-
-Copia `.env.template` a `.env` y completa:
-
-```env
-# LLM
-OPENAI_API_KEY=sk-...
-
-# LangSmith (opcional, para trazabilidad)
-LANGCHAIN_API_KEY=lsv2_...
-LANGCHAIN_TRACING_V2=true
-LANGCHAIN_PROJECT=agent-ecommerce
-
-# PostgreSQL — persistencia de interacciones
-DATABASE_URL=
-
-# TechsStore API
-API_BASE_URL=http://localhost:3000/api/v1
-API_ADMIN_EMAIL=admin@techsstore.com
-API_ADMIN_PASSWORD=Admin1234
-```
 
 > `API_BASE_URL` debe incluir `/api/v1`. Las credenciales admin deben existir en TechsStore antes de arrancar el agente.
 
