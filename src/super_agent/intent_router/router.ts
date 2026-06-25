@@ -5,11 +5,10 @@ import { INTENT_ROUTER_SYSTEM_PROMPT, INTENT_ROUTER_HUMAN_TEMPLATE } from "./pro
 import type { EcommerceState } from "../state.js";
 import { routerLlm } from "../shared/llm.js";
 
-// ============================================================
 // Clasifica la intención del usuario y actualiza `intent` y
 // `next_step` en el estado. Usa un modelo rápido
 // para minimizar latencia en el routing.
-// ============================================================
+
 
 const IntentSchema = z.object({
   intent: z.enum(["question", "recommend", "order_status", "tracking", "end"]),

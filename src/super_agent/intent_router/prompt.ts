@@ -1,6 +1,4 @@
-// ============================================================
 // Intent Router — System Prompt
-// ============================================================
 
 export const INTENT_ROUTER_SYSTEM_PROMPT = `
 Eres el clasificador de intenciones de un e-commerce. 

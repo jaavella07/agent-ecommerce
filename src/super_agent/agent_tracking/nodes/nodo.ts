@@ -4,9 +4,7 @@ import type { EcommerceState } from "../../state.js";
 import { AGENT_TRACKING_SYSTEM_PROMPT } from "./prompt.js";
 import { agentTrackingTools } from "./tool.js";
 
-// ============================================================
 // Agent Tracking — Nodo Principal
-// ============================================================
 
 const modelWithTools = llm.bindTools(agentTrackingTools);
 
