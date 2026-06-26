@@ -31,7 +31,7 @@ export const searchProductsByCategoryTool = tool(
 
       if (category) {
         const categoryId = await resolveCategoryId(category);
-        if (categoryId) params.set("category", categoryId);
+        if (categoryId) params.set("categoryId", categoryId);
       }
       if (max_price != null) params.set("maxPrice", String(Math.round(max_price * 100)));
       if (use_case)          params.set("search", use_case);

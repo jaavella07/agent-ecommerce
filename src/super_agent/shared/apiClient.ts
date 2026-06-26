@@ -1,11 +1,11 @@
 import 'dotenv/config';
 
-const BASE_URL       = process.env.API_BASE_URL      ?? 'http://localhost:3000/api/v1';
-const ADMIN_EMAIL    = process.env.API_ADMIN_EMAIL;
-const ADMIN_PASSWORD = process.env.API_ADMIN_PASSWORD;
+const BASE_URL        = process.env.API_BASE_URL       ?? 'http://localhost:3000/api/v1';
+const AGENT_EMAIL    = process.env.API_AGENT_EMAIL    ?? process.env.API_ADMIN_EMAIL;
+const AGENT_PASSWORD = process.env.API_AGENT_PASSWORD ?? process.env.API_ADMIN_PASSWORD;
 
-if (!ADMIN_EMAIL || !ADMIN_PASSWORD) {
-  throw new Error('Las variables de entorno API_ADMIN_EMAIL y API_ADMIN_PASSWORD son obligatorias.');
+if (!AGENT_EMAIL || !AGENT_PASSWORD) {
+  throw new Error('Las variables de entorno API_AGENT_EMAIL y API_AGENT_PASSWORD son obligatorias.');
 }
 
 let accessToken:  string | null = null;
@@ -16,7 +16,7 @@ async function login(): Promise<void> {
   const res = await fetch(`${BASE_URL}/auth/login`, {
     method:  'POST',
     headers: { 'Content-Type': 'application/json' },
-    body:    JSON.stringify({ email: ADMIN_EMAIL, password: ADMIN_PASSWORD }),
+    body:    JSON.stringify({ email: AGENT_EMAIL, password: AGENT_PASSWORD }),
   });
   if (!res.ok) throw new Error(`Login fallido: ${res.status}`);
   const body    = await res.json() as { data: { accessToken: string; refreshToken: string } };

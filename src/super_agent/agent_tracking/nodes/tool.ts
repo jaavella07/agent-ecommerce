@@ -19,11 +19,10 @@ export const getTrackingInfoTool = tool(
       return JSON.stringify({
         found: true,
         tracking: {
-          trackingNumber:  order.trackingNumber,
-          orderNumber:     order.orderNumber,
-          status:          order.status,
-          shippingAddress: order.shippingAddress,
-          updatedAt:       order.updatedAt,
+          trackingNumber: order.trackingNumber,
+          orderNumber:    order.orderNumber,
+          status:         order.status,
+          createdAt:      order.createdAt,
         },
       });
     } catch (e: any) {

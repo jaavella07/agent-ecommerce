@@ -24,7 +24,7 @@ export const getOrderStatusTool = tool(
   {
     name: "get_order_status",
     description:
-      "Consulta el estado detallado de un pedido usando su número de orden (ej: ORD-20240515-A3K9). Retorna estado, items, fecha estimada de entrega y número de seguimiento.",
+      "Consulta el estado de un pedido usando su número de orden (ej: ORD-20240515-A3K9). Retorna estado, items, número de seguimiento y fecha de creación.",
     schema: z.object({
       order_id: z.string().describe("Número de orden del cliente (ej: ORD-20240515-A3K9)"),
     }),
