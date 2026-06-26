@@ -41,7 +41,7 @@ import { ChatOllama } from "@langchain/ollama";
 // El modelo debe soportar tool-calling (ej: qwen2.5:7b, llama3.1)
 
 const baseUrl = process.env.OLLAMA_BASE_URL ?? "http://localhost:11434";
-const model   = process.env.OLLAMA_MODEL ?? "qwen2.5:7b";
+const model   = process.env.OLLAMA_MODEL ?? "llama3.1:latest";
 
 
 export const llm = new ChatOllama({
