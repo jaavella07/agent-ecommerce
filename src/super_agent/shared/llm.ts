@@ -11,21 +11,22 @@ import { ChatOllama } from "@langchain/ollama";
 // Para reactivar: comentar el bloque Ollama, descomentar este,
 // y asegurarse de tener OPENAI_API_KEY en el .env.
 // ------------------------------------------------------------
-// import { ChatOpenAI } from "@langchain/openai";
-//
+
+//  import { ChatOpenAI } from "@langchain/openai";
+
 // export const llm = new ChatOpenAI({
 //   model: "gpt-4o-mini",
 //   temperature: 0.3,
 //   maxTokens: 1024,
 // });
-//
+
 // // Versión con temperatura alta para recomendaciones creativas
 // export const creativeLlm = new ChatOpenAI({
 //   model: "gpt-4o-mini",
 //   temperature: 0.7,
 //   maxTokens: 1024,
 // });
-//
+
 // // Versión rápida para clasificación/routing (menor latencia)
 // export const routerLlm = new ChatOpenAI({
 //   model: "gpt-4o-mini",
