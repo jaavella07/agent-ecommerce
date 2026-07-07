@@ -1,9 +1,5 @@
-import { END, START, StateGraph } from "@langchain/langgraph";
-import { ToolNode } from "@langchain/langgraph/prebuilt";
-
+import { createToolAgentGraph } from "../shared/toolAgentGraph.js";
 import { agentTrackingNode, agentTrackingTools } from "./nodes/index.js";
-import { EcommerceStateAnnotation } from "../state.js";
-import { agentTrackingRouter } from "./router/index.js";
 
 // ============================================================
 // Agent Tracking — Sub-Grafo Compilado
@@ -21,15 +17,4 @@ import { agentTrackingRouter } from "./router/index.js";
 //
 // ============================================================
 
-const toolNode = new ToolNode(agentTrackingTools);
-
-export const agentTrackingGraph = new StateGraph(EcommerceStateAnnotation)
-  .addNode("agent", agentTrackingNode)
-  .addNode("tools", toolNode)
-  .addEdge(START, "agent")
-  .addConditionalEdges("agent", agentTrackingRouter, {
-    tools: "tools",
-    end: END,
-  })
-  .addEdge("tools", "agent")
-  .compile();
+export const agentTrackingGraph = createToolAgentGraph(agentTrackingNode, agentTrackingTools);

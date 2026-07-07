@@ -1,5 +1,6 @@
 import { SystemMessage } from "@langchain/core/messages";
 import { llm } from "../../shared/llm.js";
+import { normalizeContent } from "../../shared/content.js";
 import type { EcommerceState } from "../../state.js";
 import { AGENT_ORDER_STATUS_SYSTEM_PROMPT } from "./prompt.js";
 import { agentOrderStatusTools } from "./tool.js";
@@ -32,7 +33,7 @@ export async function agentOrderStatusNode(
 
   if (lastToolResult) {
     try {
-      const parsed = JSON.parse(lastToolResult.content as string);
+      const parsed = JSON.parse(normalizeContent(lastToolResult.content));
       if (parsed.found && parsed.order) {
         orderData = parsed.order;
         orderStatus = parsed.order.status;
@@ -44,7 +45,7 @@ export async function agentOrderStatusNode(
 
   return {
     messages: [response],
-    response: isFinalResponse ? (response.content as string) : state.response,
+    response: isFinalResponse ? normalizeContent(response.content) : state.response,
     current_order: orderData,
     order_status: orderStatus,
     steps: 1,

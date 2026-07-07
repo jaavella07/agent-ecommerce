@@ -6,35 +6,6 @@ import { ChatOllama } from "@langchain/ollama";
 // entre agentes y facilita cambiar el modelo globalmente.
 // ============================================================
 
-// ------------------------------------------------------------
-// Configuración OpenAI (desactivada — reemplazada por Ollama)
-// Para reactivar: comentar el bloque Ollama, descomentar este,
-// y asegurarse de tener OPENAI_API_KEY en el .env.
-// ------------------------------------------------------------
-
-//  import { ChatOpenAI } from "@langchain/openai";
-
-// export const llm = new ChatOpenAI({
-//   model: "gpt-4o-mini",
-//   temperature: 0.3,
-//   maxTokens: 1024,
-// });
-
-// // Versión con temperatura alta para recomendaciones creativas
-// export const creativeLlm = new ChatOpenAI({
-//   model: "gpt-4o-mini",
-//   temperature: 0.7,
-//   maxTokens: 1024,
-// });
-
-// // Versión rápida para clasificación/routing (menor latencia)
-// export const routerLlm = new ChatOpenAI({
-//   model: "gpt-4o-mini",
-//   temperature: 0.3,
-//   maxTokens: 1024,
-// });
-
-
 // Configuración Ollama
 // Soporta servidor local (localhost:11434) o remoto (Open WebUI / hosting).
 // Variables de entorno: OLLAMA_BASE_URL, OLLAMA_MODEL,
@@ -44,17 +15,21 @@ import { ChatOllama } from "@langchain/ollama";
 const baseUrl = process.env.OLLAMA_BASE_URL ?? "http://localhost:11434";
 const model   = process.env.OLLAMA_MODEL ?? "llama3.1:latest";
 
+const extraHeaders: Record<string, string> = {};
+if (process.env.OLLAMA_X_API_KEY) extraHeaders["X-API-Key"] = process.env.OLLAMA_X_API_KEY;
+if (process.env.OLLAMA_MY_KEY)    extraHeaders["My-Key"]    = process.env.OLLAMA_MY_KEY;
+const headers = Object.keys(extraHeaders).length > 0 ? extraHeaders : undefined;
 
 export const llm = new ChatOllama({
-  baseUrl, model, temperature: 0.3, numPredict: 1024
+  baseUrl, model, temperature: 0.3, numPredict: 1024, headers,
 });
 
 // Versión con temperatura alta para recomendaciones creativas
 export const creativeLlm = new ChatOllama({
-  baseUrl, model, temperature: 0.7, numPredict: 1024, 
+  baseUrl, model, temperature: 0.7, numPredict: 1024, headers,
 });
 
 // Versión rápida para clasificación/routing (menor latencia)
 export const routerLlm = new ChatOllama({
-  baseUrl, model, temperature: 0.3, numPredict: 1024, 
+  baseUrl, model, temperature: 0.3, numPredict: 1024, headers,
 });

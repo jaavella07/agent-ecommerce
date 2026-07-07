@@ -1,0 +1,211 @@
+Arquitectura: Super Agente E-commerce
+======================================
+
+Flujo general
+-------------
+
+POST /chat { message, thread_id? }
+        |
+        v
+   runSuperAgent()
+        |
+        v
+   intent_router  ->  agent_question
+                  ->  agent_recommend
+                  ->  agent_order_status
+                  ->  agent_tracking
+                  ->  agent_farewell
+                         |
+                         v
+                  save_interaction -> END
+
+
+1. Estado global — state.ts
+----------------------------
+
+El estado compartido entre todos los nodos se define con Annotation.Root.
+Cada campo tiene un reducer que decide como se actualiza:
+
+  // Acumula mensajes (historia de conversacion)
+  ...MessagesAnnotation.spec          // reducer: append
+
+  // Reemplaza en cada turno (ultimo valor gana)
+  user_input, intent, response,
+  next_step, products, recommendations,
+  current_order, order_status, tracking_number
+    // reducer: (_, next) => next
+
+  // Suma (contador de pasos)
+  steps
+    // reducer: (prev, next) => prev + next
+
+El thread_id + MemorySaver persisten el estado entre llamadas al mismo hilo
+(memoria de conversacion en RAM).
+
+
+2. Super Agent — super_agent.ts
+---------------------------------
+
+Construye el grafo principal con StateGraph:
+
+  new StateGraph(EcommerceStateAnnotation)
+    .addNode("intent_router", intentRouterNode)
+    .addNode("agent_question", agentQuestionGraph)   // sub-grafo
+    ...
+    .addEdge(START, "intent_router")
+    .addConditionalEdges("intent_router", intentRouterEdge, { ... })
+    .addEdge("agent_question", "save_interaction")
+    ...
+    .compile({ checkpointer })  // checkpointer = MemorySaver
+
+runSuperAgent(message, threadId) — funcion de entrada publica. Invoca el grafo
+con { user_input: message } y devuelve el resultado limpio al servidor.
+
+Los sub-agentes son sub-grafos compilados que se registran como nodos del
+grafo principal (grafo dentro de grafo).
+
+
+3. LLM — shared/llm.ts
+------------------------
+
+Tres instancias de ChatOllama, todas apuntan al mismo modelo,
+solo cambia la temperatura:
+
+  Instancia       Temperatura   Usado por
+  ---------       -----------   ---------
+  llm             0.3           question, order_status, tracking, farewell
+  creativeLlm     0.7           recommend
+  routerLlm       0.3           intent_router
+
+Configuracion leida del .env:
+  OLLAMA_BASE_URL, OLLAMA_MODEL, OLLAMA_X_API_KEY, OLLAMA_MY_KEY
+
+
+4. Intent Router — intent_router/router.ts
+-------------------------------------------
+
+Usa structured output para forzar al modelo a devolver JSON validado:
+
+  // Define el schema de respuesta esperada
+  const IntentSchema = z.object({
+    intent:     z.enum(["question", "recommend", "order_status", "tracking", "end"]),
+    confidence: z.number(),
+    reason:     z.string(),
+  });
+
+  // Vincula el schema al modelo
+  const llmWithStructuredOutput = routerLlm.withStructuredOutput(IntentSchema);
+
+  // Invocacion: solo SystemMessage + HumanMessage
+  const result = await llmWithStructuredOutput.invoke([
+    new SystemMessage(INTENT_ROUTER_SYSTEM_PROMPT),
+    new HumanMessage(`Clasifica: "${userInput}"`),
+  ]);
+  // result -> { intent: "question", confidence: 0.95, reason: "..." }
+
+intentRouterEdge — funcion de edge condicional que lee state.next_step
+y retorna el nombre del nodo destino ("agent_question", "agent_recommend", etc).
+
+
+5. Sub-agentes con tools (question, recommend, order_status, tracking)
+-----------------------------------------------------------------------
+
+Todos siguen el mismo patron de sub-grafo:
+
+  START -> [agent] -+- tool_calls? --yes--> [tools] --> [agent] (loop)
+                    |
+                    +-- no
+                        |
+                        v
+                       END
+
+Como se fabrica un nodo:
+
+  // 1. Vincular tools al modelo (una sola vez, fuera de la funcion)
+  const modelWithTools = llm.bindTools(agentQuestionTools);
+
+  // 2. El nodo recibe el estado y construye los mensajes
+  export async function agentQuestionNode(state: EcommerceState) {
+    const messages = [
+      new SystemMessage(AGENT_QUESTION_SYSTEM_PROMPT),  // instrucciones del agente
+      ...state.messages,                                 // historial de conversacion
+    ];
+
+    const response = await modelWithTools.invoke(messages);
+
+    // Si el modelo no pidio tools -> es la respuesta final
+    const isFinalResponse = !response.tool_calls || response.tool_calls.length === 0;
+
+    return {
+      messages: [response],
+      response: isFinalResponse ? response.content : state.response,
+      steps: 1,
+    };
+  }
+
+Router interno del sub-agente — decide si ejecutar tools o terminar:
+
+  export function agentQuestionRouter(state: EcommerceState) {
+    const lastMessage = state.messages.at(-1) as AIMessage;
+    return lastMessage?.tool_calls?.length > 0 ? "tools" : "end";
+  }
+
+ToolNode (de LangGraph prebuilt) — ejecuta automaticamente las tools que el
+modelo pidio e inyecta el resultado como mensaje "tool" en el estado.
+
+
+6. Como se define una Tool — nodes/tool.ts
+-------------------------------------------
+
+  export const searchFaqTool = tool(
+    async ({ query }) => {         // funcion real que se ejecuta
+      // logica: lookup en FAQ_DATABASE o llamada a apiFetch()
+      return "respuesta como string";
+    },
+    {
+      name: "search_faq",          // nombre que vera el modelo
+      description: "Busca...",     // descripcion para que el modelo sepa cuando usarla
+      schema: z.object({           // parametros que el modelo debe proveer
+        query: z.string().describe("La pregunta a buscar"),
+      }),
+    }
+  );
+
+  // Se exportan agrupadas
+  export const agentQuestionTools = [searchFaqTool, getCategoriesInfoTool, searchProductInfoTool];
+
+Las tools que acceden a datos reales usan apiFetch() (shared/apiClient.ts),
+que maneja login automatico con credenciales admin, cacheo de token y
+refresh en 401.
+
+
+7. Agent Farewell — patron sin tools
+--------------------------------------
+
+El mas simple: sin bindTools, sin loop, respuesta directa.
+
+  const response = await llm.invoke([
+    new SystemMessage(AGENT_FAREWELL_SYSTEM_PROMPT),
+    ...state.messages,
+  ]);
+  return { messages: [response], response: response.content, steps: 1 };
+
+
+8. Save Interaction — super_agent.ts
+--------------------------------------
+
+Nodo final que todos los sub-agentes alcanzan antes de END.
+Guarda en PostgreSQL:
+
+  await saveInteraction({
+    user_input: state.user_input,
+    intent:     state.intent,
+    response:   state.response,
+    metadata:   buildMetadata(state),  // datos extra segun el intent
+  });
+
+buildMetadata extrae del estado los datos relevantes al intent:
+recomendaciones, order_id, tracking_number, etc.
+
+Requiere Docker corriendo con el contenedor de Postgres (docker compose up -d).
+Si Postgres no esta activo se produce ECONNREFUSED en el puerto 5432.

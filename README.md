@@ -37,7 +37,15 @@ La mayoría de sub-agentes sigue el loop: `agente → ¿tool_calls? → tools �
 
 ### Memoria de conversación
 
-El grafo se compila con `MemorySaver` — el historial de mensajes se guarda en RAM por `thread_id`. Mientras el proceso esté corriendo, el agente recuerda el contexto de cada conversación. Si el proceso se reinicia, la memoria se pierde (comportamiento esperado en desarrollo).
+El grafo se compila con `PostgresSaver` (`@langchain/langgraph-checkpoint-postgres`) — el historial de mensajes se persiste en Postgres por `thread_id` (ver `src/super_agent/shared/checkpointer.ts`, conectado vía `DATABASE_URL`). A diferencia de `MemorySaver`, el contexto de cada conversación sobrevive a un reinicio del proceso. **Postgres debe estar corriendo (`docker compose up -d`) para que el agente arranque en cualquier modo**, ya que `checkpointer.setup()` se ejecuta al importar `super_agent.ts`.
+
+### LLM activo: Ollama
+
+El proyecto usa [Ollama](https://ollama.com) (no OpenAI) como proveedor del LLM — ver `src/super_agent/shared/llm.ts`. Variables de entorno relevantes:
+
+- `OLLAMA_BASE_URL` — URL del servidor Ollama (local o remoto), default `http://localhost:11434`.
+- `OLLAMA_MODEL` — modelo a usar, debe soportar tool-calling (ej. `llama3.1:latest`, `qwen2.5:7b`), default `llama3.1:latest`.
+- `OLLAMA_X_API_KEY` / `OLLAMA_MY_KEY` — headers opcionales de autenticación si el servidor Ollama es remoto y los requiere (`X-API-Key` / `My-Key`).
 
 ---
 
@@ -74,7 +82,7 @@ El grafo se compila con `MemorySaver` — el historial de mensajes se guarda en 
 
 ### CORS
 
-Acepta requests desde `http://localhost:5173` (Vite dev) y `http://localhost:4173` (Vite preview).
+Configurable con `CORS_ORIGINS` en `.env` (lista separada por comas). Por defecto acepta `http://localhost:5173` (Vite dev) y `http://localhost:4173` (Vite preview).
 
 ### Puerto
 
@@ -91,7 +99,7 @@ Las tools de `agent_order_status` y `agent_tracking` requieren rol ADMIN. El mó
 3. Si recibe `401` → `POST /auth/refresh` y reintenta
 4. Expone `apiFetch(path, options?)` — añade `Authorization: Bearer` en cada llamada
 
-Las tools de `agent_recommend` y `agent_question` usan endpoints públicos (`fetch` directo, sin auth).
+Todas las tools (incluidas `agent_recommend` y `agent_question`) usan `apiFetch` para autenticar contra la API de TechsStore.
 
 
 > `API_BASE_URL` debe incluir `/api/v1`. Las credenciales admin deben existir en TechsStore antes de arrancar el agente.
@@ -101,11 +109,15 @@ Las tools de `agent_recommend` y `agent_question` usan endpoints públicos (`fet
 ## Comandos
 
 ```bash
+docker compose up -d # Levanta Postgres (requerido antes de cualquier comando de abajo)
 npm run dev          # Ejecuta directamente con tsx (sin compilar)
 npm run build        # Compila TypeScript a dist/
 npm run dev:server   # Servidor HTTP en localhost:3500 (integración con frontend)
 npm run studio       # LangGraph Studio (puerto por defecto)
 npm run studio:port  # LangGraph Studio en puerto 2024
+npm run lint         # ESLint
+npm run format       # Prettier --write
+npm test             # Vitest
 ```
 
 El grafo expuesto en Studio es `src/super_agent/super_agent.ts:superAgentGraph`.
@@ -113,6 +125,8 @@ El grafo expuesto en Studio es `src/super_agent/super_agent.ts:superAgentGraph`.
 ---
 
 ## Requisitos mínimos para un agente en TypeScript (referencia)
+
+> ⚠️ Esta sección es un tutorial genérico de referencia para montar un agente LangGraph desde cero — **no describe el stack real de este proyecto**. Este proyecto usa Ollama (no OpenAI/GPT-4o) y no depende de Nunjucks ni de `@langchain/langgraph-supervisor`; ver las secciones anteriores para la configuración real.
 
 ### 1. Iniciar proyecto
 ```bash

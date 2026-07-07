@@ -16,5 +16,3 @@ server.ts
  
 # LangGraph API
 .langgraph_api
-
-architecture.txt

@@ -1,11 +1,17 @@
 import { tool } from "@langchain/core/tools";
 import { z }    from "zod";
-import { BASE_URL } from "../../shared/apiClient.js";
+import { apiFetch } from "../../shared/apiClient.js";
+import {
+  CategoriesEnvelope,
+  ProductEnvelope,
+  ProductsListEnvelope,
+  parseOrThrow,
+} from "../../shared/apiSchemas.js";
 
 async function resolveCategoryId(categoryName: string): Promise<string | undefined> {
-  const res = await fetch(`${BASE_URL}/products/categories`);
+  const res = await apiFetch(`/products/categories`);
   if (!res.ok) return undefined;
-  const body = await res.json() as any;
+  const body = parseOrThrow(CategoriesEnvelope, await res.json(), "resolve_category_id");
   const cats: any[] = body.data ?? [];
   return cats.find(
     (c) =>
@@ -36,14 +42,14 @@ export const searchProductsByCategoryTool = tool(
       if (max_price != null) params.set("maxPrice", String(Math.round(max_price * 100)));
       if (use_case)          params.set("search", use_case);
 
-      const res = await fetch(`${BASE_URL}/products?${params.toString()}`);
+      const res = await apiFetch(`/products?${params.toString()}`);
       if (!res.ok) {
         return JSON.stringify({
           found: false,
           message: `Error al consultar productos (HTTP ${res.status}). Intenta de nuevo.`,
         });
       }
-      const body = await res.json() as any;
+      const body = parseOrThrow(ProductsListEnvelope, await res.json(), "search_products_by_category");
       return JSON.stringify({ products: body.data?.data ?? [] });
     } catch (e: any) {
       return JSON.stringify({ products: [], error: e.message });
@@ -67,9 +73,9 @@ export const getProductComparisonTool = tool(
     try {
       const results = await Promise.all(
         product_ids.map(async (id) => {
-          const res = await fetch(`${BASE_URL}/products/${id}`);
+          const res = await apiFetch(`/products/${id}`);
           if (!res.ok) return null;
-          const body = await res.json() as any;
+          const body = parseOrThrow(ProductEnvelope, await res.json(), "get_product_comparison");
           return body.data ?? null;
         }),
       );

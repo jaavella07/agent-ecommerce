@@ -1,9 +1,5 @@
-import { END, START, StateGraph } from "@langchain/langgraph";
-import { ToolNode } from "@langchain/langgraph/prebuilt";
-
-import { EcommerceStateAnnotation } from "../state.js";
+import { createToolAgentGraph } from "../shared/toolAgentGraph.js";
 import { agentRecommendNode, agentRecommendTools } from "./nodes/index.js";
-import { agentRecommendRouter } from "./router/index.js";
 
 // ============================================================
 // Agent Recommend — Sub-Grafo Compilado
@@ -21,15 +17,4 @@ import { agentRecommendRouter } from "./router/index.js";
 //
 // ============================================================
 
-const toolNode = new ToolNode(agentRecommendTools);
-
-export const agentRecommendGraph = new StateGraph(EcommerceStateAnnotation)
-  .addNode("agent", agentRecommendNode)
-  .addNode("tools", toolNode)
-  .addEdge(START, "agent")
-  .addConditionalEdges("agent", agentRecommendRouter, {
-    tools: "tools",
-    end: END,
-  })
-  .addEdge("tools", "agent")
-  .compile();
+export const agentRecommendGraph = createToolAgentGraph(agentRecommendNode, agentRecommendTools);

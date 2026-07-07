@@ -4,6 +4,7 @@ import { AGENT_QUESTION_SYSTEM_PROMPT } from "./prompt.js";
 import type { EcommerceState } from "../../state.js";
 import { agentQuestionTools } from "./tool.js";
 import { llm } from "../../shared/llm.js";
+import { normalizeContent } from "../../shared/content.js";
 
 // ============================================================
 // Llama al LLM con las herramientas disponibles.
@@ -31,7 +32,7 @@ export async function agentQuestionNode(
   return {
     messages: [response],
     response: isFinalResponse
-      ? (response.content as string)
+      ? normalizeContent(response.content)
       : state.response,
     steps: 1,
   };

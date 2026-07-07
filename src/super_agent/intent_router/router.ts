@@ -20,6 +20,10 @@ type IntentResult = z.infer<typeof IntentSchema>;
 
 const llmWithStructuredOutput = routerLlm.withStructuredOutput(IntentSchema);
 
+// Umbral bajo el cual desconfiamos de la clasificación del modelo local
+// y preferimos derivar a agent_question (más seguro que actuar sobre un intent incierto).
+const CONFIDENCE_THRESHOLD = 0.55;
+
 //Nodo del Router 
 
 export async function intentRouterNode(
@@ -49,9 +53,17 @@ export async function intentRouterNode(
     `[IntentRouter] intent="${result.intent}" confidence=${result.confidence} — ${result.reason}`
   );
 
+  const finalIntent = result.confidence < CONFIDENCE_THRESHOLD ? "question" : result.intent;
+  if (finalIntent !== result.intent) {
+    console.log(
+      `[IntentRouter] confidence=${result.confidence} < ${CONFIDENCE_THRESHOLD} → fallback a "question" (intent original: ${result.intent})`
+    );
+  }
+
   return {
-    intent: result.intent,
-    next_step: result.intent,
+    intent: finalIntent,
+    next_step: finalIntent,
+    confidence: result.confidence,
     steps: 1,
     messages: [new HumanMessage(userInput)],
   };

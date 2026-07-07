@@ -1,6 +1,7 @@
 import { tool } from "@langchain/core/tools";
 import { z }    from "zod";
 import { apiFetch } from "../../shared/apiClient.js";
+import { OrdersListEnvelope, parseOrThrow } from "../../shared/apiSchemas.js";
 
 export const getTrackingInfoTool = tool(
   async ({ tracking_number }: { tracking_number: string }) => {
@@ -8,7 +9,7 @@ export const getTrackingInfoTool = tool(
       const normalized = tracking_number.trim().toUpperCase();
       const res  = await apiFetch(`/orders?trackingNumber=${encodeURIComponent(normalized)}&limit=1`);
       if (!res.ok) return JSON.stringify({ found: false, error: `HTTP ${res.status}` });
-      const body  = await res.json() as any;
+      const body  = parseOrThrow(OrdersListEnvelope, await res.json(), "get_tracking_info");
       const order = body.data?.data?.[0];
       if (!order) {
         return JSON.stringify({
@@ -45,7 +46,7 @@ export const getTrackingByOrderTool = tool(
       const normalized = order_id.trim().toUpperCase();
       const res  = await apiFetch(`/orders?orderNumber=${encodeURIComponent(normalized)}&limit=1`);
       if (!res.ok) return JSON.stringify({ found: false, error: `HTTP ${res.status}` });
-      const body  = await res.json() as any;
+      const body  = parseOrThrow(OrdersListEnvelope, await res.json(), "get_tracking_by_order");
       const order = body.data?.data?.[0];
       if (!order) {
         return JSON.stringify({
@@ -56,12 +57,14 @@ export const getTrackingByOrderTool = tool(
       if (!order.trackingNumber) {
         return JSON.stringify({
           found: true,
-          trackingNumber: null,
-          status:  order.status,
+          tracking: { trackingNumber: null, status: order.status },
           message: "La orden aún no tiene número de rastreo asignado. Es posible que el pedido aún no haya sido enviado.",
         });
       }
-      return JSON.stringify({ found: true, trackingNumber: order.trackingNumber, status: order.status });
+      return JSON.stringify({
+        found: true,
+        tracking: { trackingNumber: order.trackingNumber, status: order.status },
+      });
     } catch (e: any) {
       return JSON.stringify({ found: false, error: e.message });
     }

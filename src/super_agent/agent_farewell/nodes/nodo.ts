@@ -3,6 +3,7 @@ import { SystemMessage } from "@langchain/core/messages";
 import { AGENT_FAREWELL_SYSTEM_PROMPT } from "./prompt.js";
 import type { EcommerceState } from "../../state.js";
 import { llm } from "../../shared/llm.js";
+import { normalizeContent } from "../../shared/content.js";
 
 export async function agentFarewellNode(
   state: EcommerceState
@@ -14,7 +15,7 @@ export async function agentFarewellNode(
 
   return {
     messages: [response],
-    response: response.content as string,
+    response: normalizeContent(response.content),
     steps: 1,
   };
 }

@@ -1,5 +1,6 @@
 import { SystemMessage } from "@langchain/core/messages";
 import { llm } from "../../shared/llm.js";
+import { normalizeContent } from "../../shared/content.js";
 import type { EcommerceState } from "../../state.js";
 import { AGENT_TRACKING_SYSTEM_PROMPT } from "./prompt.js";
 import { agentTrackingTools } from "./tool.js";
@@ -28,9 +29,12 @@ export async function agentTrackingNode(
 
   if (lastToolResult) {
     try {
-      const parsed = JSON.parse(lastToolResult.content as string);
-      if (parsed.found && parsed.tracking?.tracking_number) {
-        trackingNumber = parsed.tracking.tracking_number;
+      const parsed = JSON.parse(normalizeContent(lastToolResult.content));
+      const extracted = parsed.found
+        ? (parsed.tracking?.trackingNumber ?? parsed.trackingNumber)
+        : undefined;
+      if (extracted) {
+        trackingNumber = extracted;
       }
     } catch {
       // ignorar
@@ -39,7 +43,7 @@ export async function agentTrackingNode(
 
   return {
     messages: [response],
-    response: isFinalResponse ? (response.content as string) : state.response,
+    response: isFinalResponse ? normalizeContent(response.content) : state.response,
     tracking_number: trackingNumber,
     steps: 1,
   };

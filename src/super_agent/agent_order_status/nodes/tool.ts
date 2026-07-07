@@ -1,6 +1,7 @@
 import { tool } from "@langchain/core/tools";
 import { z }    from "zod";
 import { apiFetch } from "../../shared/apiClient.js";
+import { OrdersListEnvelope, parseOrThrow } from "../../shared/apiSchemas.js";
 
 export const getOrderStatusTool = tool(
   async ({ order_id }: { order_id: string }) => {
@@ -8,7 +9,7 @@ export const getOrderStatusTool = tool(
       const normalizedId = order_id.trim().toUpperCase();
       const res  = await apiFetch(`/orders?orderNumber=${encodeURIComponent(normalizedId)}&limit=1`);
       if (!res.ok) return JSON.stringify({ found: false, error: `HTTP ${res.status}` });
-      const body  = await res.json() as any;
+      const body  = parseOrThrow(OrdersListEnvelope, await res.json(), "get_order_status");
       const order = body.data?.data?.[0];
       if (!order) {
         return JSON.stringify({
@@ -37,7 +38,7 @@ export const getOrdersByEmailTool = tool(
       const lowerEmail = email.toLowerCase().trim();
       const res    = await apiFetch(`/orders?email=${encodeURIComponent(lowerEmail)}&limit=5`);
       if (!res.ok) return JSON.stringify({ found: false, error: `HTTP ${res.status}` });
-      const body   = await res.json() as any;
+      const body   = parseOrThrow(OrdersListEnvelope, await res.json(), "get_orders_by_email");
       const orders = body.data?.data ?? [];
       if (orders.length === 0) {
         return JSON.stringify({

@@ -21,6 +21,11 @@ export const EcommerceStateAnnotation = Annotation.Root({
     default: () => undefined,
   }),
 
+  confidence: Annotation<number | undefined>({
+    reducer: (_, next) => next,
+    default: () => undefined,
+  }),
+
   products: Annotation<any[]>({
     reducer: (_, next) => next,
     default: () => [],

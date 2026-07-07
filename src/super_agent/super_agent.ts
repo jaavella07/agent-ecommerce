@@ -1,4 +1,4 @@
-import { END, START, StateGraph, MemorySaver } from "@langchain/langgraph";
+import { END, START, StateGraph } from "@langchain/langgraph";
 import { randomUUID } from "crypto";
 
 import { intentRouterNode, intentRouterEdge } from "./intent_router/index.js";
@@ -9,6 +9,7 @@ import { agentTrackingGraph } from "./agent_tracking/index.js";
 import { agentFarewellGraph } from "./agent_farewell/index.js";
 import { EcommerceStateAnnotation } from "./state.js";
 import { saveInteraction } from "./shared/repository.js";
+import { checkpointer } from "./shared/checkpointer.js";
 import type { EcommerceState } from "./state.js";
 
 // ============================================================
@@ -66,7 +67,10 @@ function buildMetadata(state: EcommerceState): Record<string, unknown> {
   }
 }
 
-const checkpointer = new MemorySaver();
+// PostgresSaver requiere crear sus tablas antes del primer uso. Se ejecuta aquí
+// (top-level await) para cubrir cualquier entry point que importe este módulo
+// (server.ts, index.ts, o LangGraph Studio).
+await checkpointer.setup();
 
 export const superAgentGraph = new StateGraph(EcommerceStateAnnotation)
   // Nodos
@@ -113,6 +117,7 @@ export async function runSuperAgent(userMessage: string, threadId?: string) {
     thread_id:       id,
     response:        result.response,
     intent:          result.intent,
+    confidence:      result.confidence,
     steps:           result.steps,
     order_status:    result.order_status,
     tracking_number: result.tracking_number,
