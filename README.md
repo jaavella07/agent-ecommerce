@@ -92,17 +92,35 @@ Configurable con `AGENT_PORT` en `.env`. Por defecto: `3500`.
 
 ### Autenticación con TechsStore
 
-Las tools de `agent_order_status` y `agent_tracking` requieren rol ADMIN. El módulo `src/super_agent/shared/apiClient.ts` gestiona la autenticación automáticamente:
+Todas las tools (incluidas `agent_recommend` y `agent_question`) usan `apiFetch` para autenticar contra la API de TechsStore. El módulo `src/super_agent/shared/apiClient.ts` gestiona la autenticación automáticamente:
 
-1. Primer request → `POST /auth/login` con credenciales admin del `.env`
-2. Cachea el `accessToken` en memoria
-3. Si recibe `401` → `POST /auth/refresh` y reintenta
-4. Expone `apiFetch(path, options?)` — añade `Authorization: Bearer` en cada llamada
+1. Primer request → `POST /auth/login` con las credenciales del usuario `AGENT` (rol read-only, generado por `POST /api/v1/seed/run` en TechsStore) definidas en `API_AGENT_EMAIL` / `API_AGENT_PASSWORD`
+2. Cachea el `accessToken` en memoria (login perezoso — solo se dispara con la primera llamada, y las concurrentes esperan el mismo login en curso)
+3. Si recibe `401` → `POST /auth/refresh` y reintenta; si el refresh también falla, vuelve a hacer login
+4. Reintentos con backoff exponencial ante `5xx` o errores de red, hasta `API_MAX_RETRIES` (default `2`), con timeout por request vía `API_REQUEST_TIMEOUT_MS` (default `10000` ms)
+5. Expone `apiFetch(path, options?)` — añade `Authorization: Bearer` en cada llamada
 
-Todas las tools (incluidas `agent_recommend` y `agent_question`) usan `apiFetch` para autenticar contra la API de TechsStore.
+> `API_BASE_URL` debe incluir `/api/v1`. Las credenciales del usuario `AGENT` deben existir en TechsStore antes de arrancar el agente. Por compatibilidad, `API_ADMIN_EMAIL` / `API_ADMIN_PASSWORD` siguen funcionando como fallback si `API_AGENT_EMAIL` / `API_AGENT_PASSWORD` no están definidas.
 
+---
 
-> `API_BASE_URL` debe incluir `/api/v1`. Las credenciales admin deben existir en TechsStore antes de arrancar el agente.
+## Variables de entorno
+
+Ver `.env.template` para la lista completa. Las más relevantes:
+
+| Variable | Descripción | Default |
+|---|---|---|
+| `OLLAMA_BASE_URL` | URL del servidor Ollama | `http://localhost:11434` |
+| `OLLAMA_MODEL` | Modelo con soporte tool-calling | `llama3.1:latest` |
+| `OLLAMA_X_API_KEY` / `OLLAMA_MY_KEY` | Headers de auth si Ollama es remoto | — |
+| `DATABASE_URL` | Conexión Postgres (checkpointer + auditoría) | `postgresql://agent_user:agent_pass@localhost:5432/ecommerce_agent` |
+| `API_BASE_URL` | Base de la API de TechsStore (debe incluir `/api/v1`) | `http://localhost:3000/api/v1` |
+| `API_AGENT_EMAIL` / `API_AGENT_PASSWORD` | Credenciales del usuario `AGENT` (read-only) | — (obligatorias) |
+| `API_REQUEST_TIMEOUT_MS` | Timeout por request en `apiFetch` | `10000` |
+| `API_MAX_RETRIES` | Reintentos con backoff en `apiFetch` | `2` |
+| `AGENT_PORT` | Puerto del servidor HTTP | `3500` |
+| `CORS_ORIGINS` | Orígenes permitidos (separados por coma) | `http://localhost:5173,http://localhost:4173` |
+| `LANGCHAIN_API_KEY` / `LANGCHAIN_TRACING_V2` / `LANGCHAIN_PROJECT` | Trazado opcional vía LangSmith | `LANGCHAIN_TRACING_V2=false` |
 
 ---
 
@@ -116,8 +134,10 @@ npm run dev:server   # Servidor HTTP en localhost:3500 (integración con fronten
 npm run studio       # LangGraph Studio (puerto por defecto)
 npm run studio:port  # LangGraph Studio en puerto 2024
 npm run lint         # ESLint
+npm run lint:fix     # ESLint --fix
 npm run format       # Prettier --write
-npm test             # Vitest
+npm test             # Vitest (11 tests: apiClient, intent_router, agent_tracking)
+npm run test:watch   # Vitest en modo watch
 ```
 
 El grafo expuesto en Studio es `src/super_agent/super_agent.ts:superAgentGraph`.

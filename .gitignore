@@ -3,6 +3,7 @@ dist/
 CLAUDE.md
 .claude/
 server.ts
+summary.txt
  
 # Variables de entorno — NUNCA subir al repo
 .env
